@@ -82,30 +82,11 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
 
   /// 重命名任务包
   Future<void> _rename(TaskPack pack) async {
-    final controller = TextEditingController(text: pack.name);
+    // 用自管理 controller 生命周期的对话框，避免在关闭动画结束前提前 dispose
     final newName = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('重命名任务包'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: '任务包名称'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(controller.text.trim()),
-            child: const Text('确定'),
-          ),
-        ],
-      ),
+      builder: (_) => _RenameDialog(initialName: pack.name),
     );
-    controller.dispose();
 
     if (newName == null || newName.isEmpty || newName == pack.name) {
       return;
@@ -234,6 +215,50 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                 );
               },
             ),
+    );
+  }
+}
+
+/// 重命名对话框：自管理 TextEditingController 生命周期，
+/// 随对话框 widget 树一起销毁，避免提前 dispose 引发的异常
+class _RenameDialog extends StatefulWidget {
+  final String initialName;
+
+  const _RenameDialog({required this.initialName});
+
+  @override
+  State<_RenameDialog> createState() => _RenameDialogState();
+}
+
+class _RenameDialogState extends State<_RenameDialog> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.initialName);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('重命名任务包'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(labelText: '任务包名称'),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('取消'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
+          child: const Text('确定'),
+        ),
+      ],
     );
   }
 }
