@@ -71,8 +71,10 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
       await _storage.saveTaskPacks([..._packs, pack]);
       await _load();
       _toast('导入成功');
-    } catch (_) {
-      _toast('文件格式错误');
+    } catch (e) {
+      // 显示具体错误，便于定位是编码问题还是格式问题
+      final detail = e is FormatException ? e.message : e.toString();
+      _toast('文件格式错误：$detail');
     }
   }
 
@@ -145,21 +147,47 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
     await _load();
   }
 
-  /// 解码导入文件内容：自动处理 UTF-8 BOM、UTF-8 与 GBK 编码
+  /// 解码导入文件内容：自动识别 UTF-8 / UTF-16 / GBK 编码并剥离 BOM
   String _decodeText(List<int> bytes) {
-    // 移除 UTF-8 BOM（记事本另存为"UTF-8"时可能带 BOM）
-    final data = (bytes.length >= 3 &&
-            bytes[0] == 0xEF &&
-            bytes[1] == 0xBB &&
-            bytes[2] == 0xBF)
-        ? bytes.sublist(3)
-        : bytes;
-    try {
-      return utf8.decode(data);
-    } on FormatException {
-      // UTF-8 解码失败，尝试 GBK（Windows 记事本默认 ANSI 编码）
-      return gbk.decode(data);
+    // UTF-8 BOM
+    if (bytes.length >= 3 &&
+        bytes[0] == 0xEF &&
+        bytes[1] == 0xBB &&
+        bytes[2] == 0xBF) {
+      return utf8.decode(bytes.sublist(3));
     }
+    // UTF-16 LE BOM
+    if (bytes.length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE) {
+      return _decodeUtf16Le(bytes.sublist(2));
+    }
+    // UTF-16 BE BOM
+    if (bytes.length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF) {
+      return _decodeUtf16Be(bytes.sublist(2));
+    }
+    try {
+      return utf8.decode(bytes);
+    } on FormatException {
+      // UTF-8 失败，回退到 GBK（Windows 记事本默认 ANSI 编码）
+      return gbk.decode(bytes);
+    }
+  }
+
+  /// UTF-16 小端解码
+  String _decodeUtf16Le(List<int> bytes) {
+    final units = <int>[];
+    for (var i = 0; i + 1 < bytes.length; i += 2) {
+      units.add(bytes[i] | (bytes[i + 1] << 8));
+    }
+    return String.fromCharCodes(units);
+  }
+
+  /// UTF-16 大端解码
+  String _decodeUtf16Be(List<int> bytes) {
+    final units = <int>[];
+    for (var i = 0; i + 1 < bytes.length; i += 2) {
+      units.add((bytes[i] << 8) | bytes[i + 1]);
+    }
+    return String.fromCharCodes(units);
   }
 
   void _toast(String msg) {
