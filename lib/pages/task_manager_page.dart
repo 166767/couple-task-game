@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:charset/charset.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -53,7 +54,7 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
 
     try {
       final bytes = await file.readAsBytes();
-      final content = utf8.decode(bytes);
+      final content = _decodeText(bytes);
 
       // 文件名去掉 .txt 作为任务包名
       final name = file.name.replaceAll(
@@ -142,6 +143,23 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
       await _storage.setCurrentPackName(null);
     }
     await _load();
+  }
+
+  /// 解码导入文件内容：自动处理 UTF-8 BOM、UTF-8 与 GBK 编码
+  String _decodeText(List<int> bytes) {
+    // 移除 UTF-8 BOM（记事本另存为"UTF-8"时可能带 BOM）
+    final data = (bytes.length >= 3 &&
+            bytes[0] == 0xEF &&
+            bytes[1] == 0xBB &&
+            bytes[2] == 0xBF)
+        ? bytes.sublist(3)
+        : bytes;
+    try {
+      return utf8.decode(data);
+    } on FormatException {
+      // UTF-8 解码失败，尝试 GBK（Windows 记事本默认 ANSI 编码）
+      return gbk.decode(data);
+    }
   }
 
   void _toast(String msg) {
