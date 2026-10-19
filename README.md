@@ -1,17 +1,52 @@
-# couple_task_game
+# 任务大冒险（XiaoYi）
 
-A new Flutter project.
+一款仅供情侣间游戏娱乐的安卓 App：选择难度和总时长，从任务包中随机抽取任务进行互动挑战。
 
-## Getting Started
+## ✨ 功能
 
-This project is a starting point for a Flutter application.
+- **四档难度**：简单 / 普通 / 困难 / 极难，可单选
+- **总时长倒计时**：1~60 分钟可调，倒计时结束自动结算
+- **任务包系统**：
+  - 导入 txt 任务包（自动兼容 UTF-8 / UTF-16 / GBK 编码）
+  - 内置示例任务包
+  - 在 App 内**制作 / 编辑**任务包（增删改任务）
+  - **导出分享**为 txt，好友导入即玩
+- **深灰 + 艳粉**主题配色
 
-A few resources to get you started if this is your first Flutter project:
+## 📦 任务包 txt 格式
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```
+[简单]
+牵手一分钟|60
+对视十秒|10
+[普通]
+互相喂一口吃的|90
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- 用 `[简单]` `[普通]` `[困难]` `[极难]` 分节，顺序不限、可缺省
+- 每行一条任务：`任务内容|时长`
+- 时长：纯数字=秒，`30秒` / `2分钟`，不写默认 30 秒
+
+## 🔨 构建
+
+- Flutter 3.47 / Dart 3.13，仅 Android
+- 依赖：`shared_preferences`、`file_picker`、`share_plus`、`path_provider`
+
+```bash
+flutter pub get
+flutter build apk --release
+```
+
+产物：`build/app/outputs/flutter-apk/app-release.apk`
+
+## 📄 开源声明
+
+本应用为纯开源项目，源代码完全公开。**任何以付费、售卖本应用或其资源的行为均属盗用盈利，请勿上当受骗。**
+
+## 👤 作者
+
+小弈（[166767](https://github.com/166767)） · 2700899650@qq.com
+
+## 📜 协议
+
+[MIT License](LICENSE)
