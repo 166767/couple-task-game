@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../models/difficulty.dart';
 import '../models/task_pack.dart';
 import '../services/storage_service.dart';
+import '../theme.dart';
 import 'game_page.dart';
 import 'task_manager_page.dart';
 import 'task_pack_editor_page.dart';
@@ -29,13 +30,17 @@ class _HomePageState extends State<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _showNoticeIfNeeded());
   }
 
-  /// 若未勾选"不再提示"，则弹出公告
+  /// 启动时依次弹出：年龄确认公告 → 开源公告（各自判断"不再提示"）
   Future<void> _showNoticeIfNeeded() async {
-    final noMore = await _storage.getNoticeNoMore();
-    if (noMore || !mounted) {
-      return;
+    // 1. 年龄确认（未勾选"不再提示"才弹）
+    if (!await _storage.getNoticeNoMore() && mounted) {
+      await showNoticeDialog(context, _storage);
     }
-    await showNoticeDialog(context, _storage);
+    if (!mounted) return;
+    // 2. 开源公告（未勾选"不再提示"才弹）
+    if (!await _storage.getOpenSourceNoMore() && mounted) {
+      await showOpenSourceDialog(context, _storage);
+    }
   }
 
   /// 点击"开始"：做校验后进入游戏页
@@ -86,7 +91,22 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('任务大冒险')),
+      appBar: AppBar(
+        title: const Text('任务大冒险'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(24),
+          child: Container(
+            width: double.infinity,
+            color: AppColors.accent.withValues(alpha: 0.10),
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: const Text(
+              '本软件完全开源，任何收费售卖均为盗卖诈骗',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, color: Colors.grey),
+            ),
+          ),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -227,5 +247,60 @@ Future<void> showNoticeDialog(
   } else if (result == 'exit') {
     // 未满18周岁：退出应用；不记住"不再提示"，下次启动仍会再次确认
     SystemNavigator.pop();
+  }
+}
+
+/// 开源公告弹窗：开源声明 + GitHub 地址 + 作者信息 + "不再提示"复选框
+Future<void> showOpenSourceDialog(
+  BuildContext context,
+  StorageService storage,
+) async {
+  var noMore = false;
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text('开源声明'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('本应用为纯开源项目，源代码已完全公开，可自由查看与学习。'),
+            const SizedBox(height: 8),
+            const Text('任何以付费、售卖本应用或其资源的行为均属盗用盈利，请勿上当受骗。'),
+            const SizedBox(height: 12),
+            const Text('作者：小弈'),
+            const Text('联系邮箱：2700899650@qq.com'),
+            const Text('开源地址：https://github.com/166767/couple-task-game'),
+            const SizedBox(height: 16),
+            StatefulBuilder(
+              builder: (context, setState) {
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Checkbox(
+                      value: noMore,
+                      onChanged: (v) => setState(() => noMore = v ?? false),
+                    ),
+                    const Text('不再提示'),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('确认'),
+          ),
+        ],
+      );
+    },
+  );
+
+  // 勾选"不再提示"才记住
+  if (noMore) {
+    await storage.setOpenSourceNoMore(true);
   }
 }

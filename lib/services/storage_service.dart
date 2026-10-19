@@ -12,6 +12,7 @@ class StorageService {
   static const String _kTaskPacks = 'task_packs';
   static const String _kCurrentPackName = 'current_pack_name';
   static const String _kNoticeNoMore = 'notice_no_more';
+  static const String _kOpenSourceNoMore = 'open_source_no_more';
   static const String _kInitialized = 'initialized';
 
   /// 内置示例任务包内容（首次启动自动内置）
@@ -102,5 +103,17 @@ class StorageService {
   Future<void> setNoticeNoMore(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_kNoticeNoMore, value);
+  }
+
+  /// 读取开源公告"不再提示"布尔值
+  Future<bool> getOpenSourceNoMore() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_kOpenSourceNoMore) ?? false;
+  }
+
+  /// 设置开源公告"不再提示"布尔值
+  Future<void> setOpenSourceNoMore(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kOpenSourceNoMore, value);
   }
 }
