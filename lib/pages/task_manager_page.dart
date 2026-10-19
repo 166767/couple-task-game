@@ -1,14 +1,18 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:charset/charset.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../models/difficulty.dart';
 import '../models/task_pack.dart';
 import '../services/storage_service.dart';
 import '../services/txt_parser.dart';
 import '../theme.dart';
+import 'task_pack_editor_page.dart';
 
 /// 任务管理页：列表展示、导入、重命名、删除、设为使用中
 class TaskManagerPage extends StatefulWidget {
@@ -190,6 +194,32 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
     return String.fromCharCodes(units);
   }
 
+  /// 编辑任务包（跳转到编辑器）
+  Future<void> _edit(TaskPack pack) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => TaskPackEditorPage(pack: pack)),
+    );
+    await _load(); // 返回后刷新
+  }
+
+  /// 导出任务包：生成 txt 并调起系统分享
+  Future<void> _export(TaskPack pack) async {
+    try {
+      final content = TxtParser.encode(pack);
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/${pack.name}.txt');
+      await file.writeAsString(content, encoding: utf8);
+
+      await SharePlus.instance.share(ShareParams(
+        files: [XFile(file.path)],
+        subject: '任务包分享',
+        text: '分享任务包「${pack.name}」',
+      ));
+    } catch (e) {
+      _toast('导出失败：$e');
+    }
+  }
+
   void _toast(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -247,11 +277,15 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                           ),
                         PopupMenuButton<String>(
                           onSelected: (v) {
+                            if (v == 'edit') _edit(pack);
                             if (v == 'rename') _rename(pack);
+                            if (v == 'export') _export(pack);
                             if (v == 'delete') _delete(pack);
                           },
                           itemBuilder: (context) => const [
+                            PopupMenuItem(value: 'edit', child: Text('编辑任务')),
                             PopupMenuItem(value: 'rename', child: Text('重命名')),
+                            PopupMenuItem(value: 'export', child: Text('导出分享')),
                             PopupMenuItem(value: 'delete', child: Text('删除')),
                           ],
                         ),

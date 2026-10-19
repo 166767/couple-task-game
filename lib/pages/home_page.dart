@@ -6,6 +6,7 @@ import '../models/task_pack.dart';
 import '../services/storage_service.dart';
 import 'game_page.dart';
 import 'task_manager_page.dart';
+import 'task_pack_editor_page.dart';
 
 /// 主页：选择难度、总时长，进入任务管理页或开始游戏
 class HomePage extends StatefulWidget {
@@ -124,6 +125,22 @@ class _HomePageState extends State<HomePage> {
               onChanged: (v) => setState(() => _totalMinutes = v.round()),
             ),
             const Spacer(),
+            // 制作任务包按钮
+            OutlinedButton.icon(
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const TaskPackEditorPage(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.edit_note),
+              label: const Text('制作任务包'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+            ),
+            const SizedBox(height: 12),
             // 任务管理按钮
             OutlinedButton.icon(
               onPressed: () async {

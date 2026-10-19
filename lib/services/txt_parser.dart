@@ -93,4 +93,19 @@ class TxtParser {
     final unit = match.group(2)!;
     return unit == '分钟' ? value * 60 : value;
   }
+
+  /// 将任务包序列化为 TXT 字符串（格式与导入一致，便于导出分享）
+  static String encode(TaskPack pack) {
+    final buffer = StringBuffer();
+    for (final d in Difficulty.values) {
+      final tasks = pack.tasksOf(d);
+      if (tasks.isEmpty) continue;
+      buffer.writeln(d.sectionTag);
+      for (final t in tasks) {
+        buffer.writeln('${t.content}|${t.seconds}');
+      }
+      buffer.writeln();
+    }
+    return '${buffer.toString().trimRight()}\n';
+  }
 }
