@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 import '../models/difficulty.dart';
 import '../models/task_pack.dart';
 import '../services/storage_service.dart';
-import '../theme.dart';
 import 'game_page.dart';
+import 'settings_page.dart';
 import 'task_manager_page.dart';
 import 'task_pack_editor_page.dart';
 
@@ -93,11 +93,20 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('任务大冒险'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: '设置',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SettingsPage()),
+            ),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(24),
           child: Container(
             width: double.infinity,
-            color: AppColors.accent.withValues(alpha: 0.10),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.10),
             padding: const EdgeInsets.symmetric(vertical: 5),
             child: const Text(
               '本软件完全开源，任何收费售卖均为盗卖诈骗',

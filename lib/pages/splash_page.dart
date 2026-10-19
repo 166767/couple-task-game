@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme.dart';
 import 'home_page.dart';
 
 /// 开屏页：居中显示 LOGO（占位），透明度渐隐渐显动画约 2 秒，结束后跳转主页
@@ -59,16 +58,16 @@ class _SplashPageState extends State<SplashPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: FadeTransition(
           opacity: _opacity,
-          child: const Text(
+          child: Text(
             'XiaoYi',
             style: TextStyle(
               fontSize: 48,
               fontWeight: FontWeight.bold,
-              color: AppColors.accent,
+              color: Theme.of(context).colorScheme.primary,
               letterSpacing: 4,
             ),
           ),

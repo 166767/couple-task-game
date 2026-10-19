@@ -2,11 +2,12 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/difficulty.dart';
 import '../models/task.dart';
 import '../models/task_pack.dart';
-import '../theme.dart';
+import '../services/storage_service.dart';
 
 /// 游戏页：大字显示任务，单任务倒计时 + 进度条，总时长倒计时
 class GamePage extends StatefulWidget {
@@ -27,11 +28,13 @@ class GamePage extends StatefulWidget {
 
 class _GamePageState extends State<GamePage> {
   final Random _random = Random();
+  final StorageService _storage = StorageService();
 
   Timer? _timer;
   int _totalSeconds = 0;
   int _taskRemaining = 0;
   Task? _currentTask;
+  bool _vibrationEnabled = true;
 
   /// 本轮已抽取任务索引集合（索引相对当前难度列表）
   final Set<int> _used = {};
@@ -40,8 +43,24 @@ class _GamePageState extends State<GamePage> {
   void initState() {
     super.initState();
     _totalSeconds = widget.totalMinutes * 60;
+    _loadVibration();
     _drawNextTask();
     _startTimer();
+  }
+
+  Future<void> _loadVibration() async {
+    final enabled = await _storage.getVibrationEnabled();
+    if (mounted) setState(() => _vibrationEnabled = enabled);
+  }
+
+  /// 震动反馈（开关关闭时不震动）
+  void _vibrate({bool heavy = false}) {
+    if (!_vibrationEnabled) return;
+    if (heavy) {
+      HapticFeedback.heavyImpact();
+    } else {
+      HapticFeedback.mediumImpact();
+    }
   }
 
   @override
@@ -74,18 +93,27 @@ class _GamePageState extends State<GamePage> {
     }
   }
 
-  /// 总时长结束：弹"时间到"，确定后返回主页
+  /// 总时长结束：强震动 + 缩放动画弹"时间到"，确定后返回主页
   Future<void> _finish() async {
     _timer?.cancel();
-    await showDialog<void>(
+    _vibrate(heavy: true); // 时间到强震动
+    await showGeneralDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
+      transitionDuration: const Duration(milliseconds: 450),
+      transitionBuilder: (context, anim, _, child) {
+        // 完成动画：弹性缩放
+        return ScaleTransition(
+          scale: CurvedAnimation(parent: anim, curve: Curves.elasticOut),
+          child: child,
+        );
+      },
+      pageBuilder: (context, _, _) => AlertDialog(
         title: const Text('时间到'),
         content: const Text('本次游戏已结束。'),
         actions: [
           FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('确定'),
           ),
         ],
@@ -113,6 +141,7 @@ class _GamePageState extends State<GamePage> {
 
     final idx = available[_random.nextInt(available.length)];
     _used.add(idx);
+    _vibrate(); // 任务切换震动
     setState(() {
       _currentTask = list[idx];
       _taskRemaining = list[idx].seconds;
@@ -178,15 +207,31 @@ class _GamePageState extends State<GamePage> {
         child: Column(
           children: [
             const SizedBox(height: 40),
-            // 任务内容大字显示
+            // 任务内容大字显示（切换时有淡入滑动动画）
             Expanded(
               child: Center(
-                child: Text(
-                  task?.content ?? '',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, 0.25),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: Text(
+                    task?.content ?? '',
+                    key: ValueKey(task?.content ?? ''),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -194,10 +239,10 @@ class _GamePageState extends State<GamePage> {
             // 倒计时数字
             Text(
               '$_taskRemaining',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 56,
                 fontWeight: FontWeight.bold,
-                color: AppColors.accent,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(height: 8),

@@ -11,7 +11,6 @@ import '../models/difficulty.dart';
 import '../models/task_pack.dart';
 import '../services/storage_service.dart';
 import '../services/txt_parser.dart';
-import '../theme.dart';
 import 'task_pack_editor_page.dart';
 
 /// 任务管理页：列表展示、导入、重命名、删除、设为使用中
@@ -27,6 +26,7 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
 
   List<TaskPack> _packs = [];
   String? _currentName;
+  List<String> _pinned = [];
 
   @override
   void initState() {
@@ -34,16 +34,37 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
     _load();
   }
 
-  /// 读取任务包列表与当前使用包
+  /// 读取任务包列表、当前使用包与置顶列表
   Future<void> _load() async {
     final packs = await _storage.loadTaskPacks();
     final current = await _storage.getCurrentPackName();
+    final pinned = await _storage.getPinnedPacks();
     if (mounted) {
       setState(() {
         _packs = packs;
         _currentName = current;
+        _pinned = pinned;
       });
     }
+  }
+
+  /// 排序后的任务包：置顶的排前面
+  List<TaskPack> get _sortedPacks {
+    final pinned = [for (final p in _packs) if (_pinned.contains(p.name)) p];
+    final others = [for (final p in _packs) if (!_pinned.contains(p.name)) p];
+    return [...pinned, ...others];
+  }
+
+  /// 切换任务包置顶状态
+  Future<void> _togglePin(TaskPack pack) async {
+    final pinned = [..._pinned];
+    if (pinned.contains(pack.name)) {
+      pinned.remove(pack.name);
+    } else {
+      pinned.add(pack.name);
+    }
+    await _storage.setPinnedPacks(pinned);
+    await _load();
   }
 
   /// 导入 TXT 任务包
@@ -251,22 +272,38 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
       body: _packs.isEmpty
           ? const Center(child: Text('暂无任务包，请点击右下角导入'))
           : ListView.builder(
-              itemCount: _packs.length,
+              itemCount: _sortedPacks.length,
               itemBuilder: (context, index) {
-                final pack = _packs[index];
+                final pack = _sortedPacks[index];
                 final inUse = pack.name == _currentName;
+                final pinned = _pinned.contains(pack.name);
                 return Card(
-                  color: inUse ? AppColors.accent.withValues(alpha: 0.18) : null,
+                  color: inUse
+                      ? Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.18)
+                      : null,
                   child: ListTile(
                     leading: Icon(
                       inUse ? Icons.check_circle : Icons.inventory_2,
-                      color: inUse ? AppColors.accent : null,
+                      color: inUse
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
                     ),
                     title: Text(pack.name),
                     subtitle: Text(_summary(pack)),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (pinned)
+                          const Padding(
+                            padding: EdgeInsets.only(right: 8),
+                            child: Chip(
+                              label: Text('置顶'),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ),
                         if (inUse)
                           const Padding(
                             padding: EdgeInsets.only(right: 8),
@@ -279,12 +316,17 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                           onSelected: (v) {
                             if (v == 'edit') _edit(pack);
                             if (v == 'rename') _rename(pack);
+                            if (v == 'pin') _togglePin(pack);
                             if (v == 'export') _export(pack);
                             if (v == 'delete') _delete(pack);
                           },
-                          itemBuilder: (context) => const [
+                          itemBuilder: (context) => [
                             PopupMenuItem(value: 'edit', child: Text('编辑任务')),
                             PopupMenuItem(value: 'rename', child: Text('重命名')),
+                            PopupMenuItem(
+                              value: 'pin',
+                              child: Text(pinned ? '取消置顶' : '置顶'),
+                            ),
                             PopupMenuItem(value: 'export', child: Text('导出分享')),
                             PopupMenuItem(value: 'delete', child: Text('删除')),
                           ],

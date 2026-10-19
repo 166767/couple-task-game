@@ -13,6 +13,9 @@ class StorageService {
   static const String _kCurrentPackName = 'current_pack_name';
   static const String _kNoticeNoMore = 'notice_no_more';
   static const String _kOpenSourceNoMore = 'open_source_no_more';
+  static const String _kThemeId = 'theme_id';
+  static const String _kVibrationEnabled = 'vibration_enabled';
+  static const String _kPinnedPacks = 'pinned_packs';
   static const String _kInitialized = 'initialized';
 
   /// 内置示例任务包内容（首次启动自动内置）
@@ -115,5 +118,43 @@ class StorageService {
   Future<void> setOpenSourceNoMore(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_kOpenSourceNoMore, value);
+  }
+
+  /// 读取当前主题 id（null 表示使用默认第一套）
+  Future<String?> getThemeId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_kThemeId);
+  }
+
+  /// 设置当前主题 id
+  Future<void> setThemeId(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kThemeId, id);
+  }
+
+  /// 读取震动开关（默认开启）
+  Future<bool> getVibrationEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_kVibrationEnabled) ?? true;
+  }
+
+  /// 设置震动开关
+  Future<void> setVibrationEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kVibrationEnabled, value);
+  }
+
+  /// 读取置顶任务包名称列表
+  Future<List<String>> getPinnedPacks() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_kPinnedPacks);
+    if (raw == null || raw.isEmpty) return [];
+    return [for (final e in jsonDecode(raw) as List<dynamic>) e as String];
+  }
+
+  /// 保存置顶任务包名称列表
+  Future<void> setPinnedPacks(List<String> names) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kPinnedPacks, jsonEncode(names));
   }
 }
