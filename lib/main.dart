@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'pages/splash_page.dart';
 import 'services/storage_service.dart';
+import 'theme.dart';
 
 /// 应用入口：先初始化本地存储（首次内置示例任务包），再启动界面。
 /// 初始化异常或超时都不会阻塞启动，避免因存储插件问题导致黑屏。
@@ -26,10 +27,7 @@ class TaskAdventureApp extends StatelessWidget {
     return MaterialApp(
       title: '任务大冒险',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.pink),
-        useMaterial3: true,
-      ),
+      theme: buildAppTheme(),
       home: const SplashPage(),
     );
   }

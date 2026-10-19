@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../models/difficulty.dart';
 import '../models/task.dart';
 import '../models/task_pack.dart';
+import '../theme.dart';
 
 /// 游戏页：大字显示任务，单任务倒计时 + 进度条，总时长倒计时
 class GamePage extends StatefulWidget {
@@ -191,7 +192,7 @@ class _GamePageState extends State<GamePage> {
               style: const TextStyle(
                 fontSize: 56,
                 fontWeight: FontWeight.bold,
-                color: Colors.pink,
+                color: AppColors.accent,
               ),
             ),
             const SizedBox(height: 8),

@@ -7,6 +7,7 @@ import '../models/difficulty.dart';
 import '../models/task_pack.dart';
 import '../services/storage_service.dart';
 import '../services/txt_parser.dart';
+import '../theme.dart';
 
 /// 任务管理页：列表展示、导入、重命名、删除、设为使用中
 class TaskManagerPage extends StatefulWidget {
@@ -179,11 +180,11 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
                 final pack = _packs[index];
                 final inUse = pack.name == _currentName;
                 return Card(
-                  color: inUse ? Colors.pink.shade50 : null,
+                  color: inUse ? AppColors.accent.withValues(alpha: 0.18) : null,
                   child: ListTile(
                     leading: Icon(
                       inUse ? Icons.check_circle : Icons.inventory_2,
-                      color: inUse ? Colors.pink : null,
+                      color: inUse ? AppColors.accent : null,
                     ),
                     title: Text(pack.name),
                     subtitle: Text(_summary(pack)),
