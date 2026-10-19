@@ -34,6 +34,10 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // 禁用 R8 混淆与资源压缩，避免插件（如 shared_preferences）原生方法
+            // 被混淆移除后抛出 NoSuchMethodError
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
