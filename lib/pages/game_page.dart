@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:vibration/vibration.dart';
 
 import '../models/difficulty.dart';
 import '../models/task.dart';
@@ -57,9 +57,11 @@ class _GamePageState extends State<GamePage> {
   void _vibrate({bool heavy = false}) {
     if (!_vibrationEnabled) return;
     if (heavy) {
-      HapticFeedback.heavyImpact();
+      // 强震动：两次长震动
+      Vibration.vibrate(pattern: const [0, 200, 100, 200]);
     } else {
-      HapticFeedback.mediumImpact();
+      // 中等震动：一次短震动
+      Vibration.vibrate(duration: 120);
     }
   }
 
