@@ -64,7 +64,7 @@ class _SplashPageState extends State<SplashPage>
         child: FadeTransition(
           opacity: _opacity,
           child: const Text(
-            'LOGO',
+            'XiaoYi',
             style: TextStyle(
               fontSize: 48,
               fontWeight: FontWeight.bold,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/difficulty.dart';
 import '../models/task_pack.dart';
@@ -153,21 +154,23 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-/// 公告弹窗：默认文案 + "不再提示"复选框 + "确定"按钮
+/// 公告弹窗：年满 18 周岁确认 + "不再提示"复选框
 Future<void> showNoticeDialog(
   BuildContext context,
   StorageService storage,
 ) async {
   var noMore = false;
-  await showDialog<void>(
+  // 'adult' = 已满18周岁；'exit' = 未满18周岁，退出应用
+  final result = await showDialog<String>(
     context: context,
+    barrierDismissible: false, // 必须选择其中一个按钮
     builder: (dialogContext) {
       return AlertDialog(
-        title: const Text('公告'),
+        title: const Text('年龄确认'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('欢迎使用情侣任务大冒险，本 App 仅供情侣间游戏娱乐。'),
+            const Text('你是否已经年满18周岁且具有清晰的自我判断能力？'),
             const SizedBox(height: 16),
             StatefulBuilder(
               builder: (context, setState) {
@@ -187,16 +190,25 @@ Future<void> showNoticeDialog(
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('确定'),
+            onPressed: () => Navigator.of(dialogContext).pop('exit'),
+            child: const Text('我未年满18周岁，退出'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop('adult'),
+            child: const Text('我已年满18周岁'),
           ),
         ],
       );
     },
   );
 
-  // 勾选了"不再提示"则持久化保存
-  if (noMore) {
-    await storage.setNoticeNoMore(true);
+  if (result == 'adult') {
+    // 已满18周岁：勾选"不再提示"才记住，下次不再弹
+    if (noMore) {
+      await storage.setNoticeNoMore(true);
+    }
+  } else if (result == 'exit') {
+    // 未满18周岁：退出应用；不记住"不再提示"，下次启动仍会再次确认
+    SystemNavigator.pop();
   }
 }

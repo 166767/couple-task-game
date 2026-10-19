@@ -167,6 +167,11 @@ class _GamePageState extends State<GamePage> {
       appBar: AppBar(
         title: Text('${widget.difficulty.label} · 剩余 $_totalTimeText'),
         automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: '返回',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
