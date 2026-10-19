@@ -52,6 +52,35 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  /// 查看开源声明与公告（常驻入口，不受"不再提示"影响）
+  void _showNotice() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('开源声明'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('本应用为纯开源项目，源代码已完全公开，可自由查看与学习。'),
+            SizedBox(height: 8),
+            Text('任何以付费、售卖本应用或其资源的行为均属盗用盈利，请勿上当受骗。'),
+            SizedBox(height: 12),
+            Text('作者：小弈'),
+            Text('联系邮箱：2700899650@qq.com'),
+            Text('开源地址：https://github.com/166767/couple-task-game'),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('关闭'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,6 +101,14 @@ class _SettingsPageState extends State<SettingsPage> {
             subtitle: const Text('任务切换与倒计时结束时震动'),
             value: _vibration,
             onChanged: _toggleVibration,
+          ),
+          const Divider(height: 24),
+          ListTile(
+            leading: const Icon(Icons.campaign),
+            title: const Text('开源声明与公告'),
+            subtitle: const Text('查看作者、联系方式与防诈骗提示'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _showNotice,
           ),
         ],
       ),
