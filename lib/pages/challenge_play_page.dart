@@ -189,6 +189,8 @@ class _ChallengePlayPageState extends State<ChallengePlayPage>
 
   /// 请求权限并显示悬浮窗
   Future<void> _setupOverlay() async {
+    // 提前获取设备像素比（避免 async gap 后访问 context）
+    final dpr = MediaQuery.of(context).devicePixelRatio;
     try {
       var granted = await FlutterOverlayWindow.isPermissionGranted();
       if (!granted) {
@@ -196,12 +198,13 @@ class _ChallengePlayPageState extends State<ChallengePlayPage>
         granted = await FlutterOverlayWindow.isPermissionGranted();
       }
       if (!granted) return; // 用户拒绝，不显示悬浮窗
+      // 注意：插件的 width/height 参数按 px 处理，需用设备像素比换算
       await FlutterOverlayWindow.showOverlay(
-        height: 110,
-        width: 340,
+        height: (110 * dpr).round(),
+        width: (340 * dpr).round(),
         alignment: OverlayAlignment.topCenter,
         enableDrag: true,
-        // 指定初始 y 坐标，避免插件默认的负状态栏高度偏移导致悬浮窗在屏幕外
+        // 指定初始 y 坐标（dp），避免插件默认的负状态栏高度偏移导致悬浮窗在屏幕外
         startPosition: const OverlayPosition(0, 100),
         overlayTitle: '频率挑战',
         overlayContent: '正在进行挑战',
