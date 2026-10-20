@@ -201,6 +201,8 @@ class _ChallengePlayPageState extends State<ChallengePlayPage>
         width: 300,
         alignment: OverlayAlignment.topCenter,
         enableDrag: true,
+        // 指定初始 y 坐标，避免插件默认的负状态栏高度偏移导致悬浮窗在屏幕外
+        startPosition: const OverlayPosition(0, 100),
         overlayTitle: '频率挑战',
         overlayContent: '正在进行挑战',
       );
