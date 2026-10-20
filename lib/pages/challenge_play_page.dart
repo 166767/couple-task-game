@@ -197,8 +197,8 @@ class _ChallengePlayPageState extends State<ChallengePlayPage>
       }
       if (!granted) return; // 用户拒绝，不显示悬浮窗
       await FlutterOverlayWindow.showOverlay(
-        height: 72,
-        width: 300,
+        height: 110,
+        width: 340,
         alignment: OverlayAlignment.topCenter,
         enableDrag: true,
         // 指定初始 y 坐标，避免插件默认的负状态栏高度偏移导致悬浮窗在屏幕外

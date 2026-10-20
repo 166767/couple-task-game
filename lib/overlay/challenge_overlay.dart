@@ -64,15 +64,15 @@ class _ChallengeOverlayState extends State<ChallengeOverlay>
     return Material(
       color: Colors.transparent,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(24),
+          color: Colors.black.withValues(alpha: 0.75),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 频率灯
+            // 频率灯（稍大）
             AnimatedBuilder(
               animation: _lightController,
               builder: (context, child) => Opacity(
@@ -80,35 +80,40 @@ class _ChallengeOverlayState extends State<ChallengeOverlay>
                 child: child,
               ),
               child: Container(
-                width: 24,
-                height: 24,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: _color,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
                       color: _color.withValues(alpha: 0.6),
-                      blurRadius: 10,
+                      blurRadius: 12,
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(width: 10),
-            // 当前挑战剩余秒数
-            Text(
-              '$_seconds',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(width: 10),
-            // 剩余总时间
-            Text(
-              _totalText,
-              style: const TextStyle(color: Colors.white70, fontSize: 14),
+            const SizedBox(width: 14),
+            // 右侧两行文字：当前秒数 + 剩余总时间
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$_seconds 秒',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '总 $_totalText',
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ],
             ),
           ],
         ),
