@@ -2,13 +2,17 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 
 import '../models/challenge.dart';
 import '../services/storage_service.dart';
 
 /// 开始挑战页：中央灯按频率闪烁，跟着节奏做动作
 class ChallengePlayPage extends StatefulWidget {
-  const ChallengePlayPage({super.key});
+  /// 总时长（分钟）
+  final int totalMinutes;
+
+  const ChallengePlayPage({super.key, required this.totalMinutes});
 
   @override
   State<ChallengePlayPage> createState() => _ChallengePlayPageState();
@@ -21,7 +25,8 @@ class _ChallengePlayPageState extends State<ChallengePlayPage>
 
   List<Challenge> _challenges = [];
   Challenge? _current;
-  int _remaining = 0;
+  int _remaining = 0; // 当前挑战剩余秒
+  int _totalSeconds = 0; // 总时长剩余秒
   Timer? _timer;
   bool _paused = false;
 
@@ -34,6 +39,7 @@ class _ChallengePlayPageState extends State<ChallengePlayPage>
   @override
   void initState() {
     super.initState();
+    _totalSeconds = widget.totalMinutes * 60;
     _lightController = AnimationController(vsync: this);
     _load();
   }
@@ -42,6 +48,7 @@ class _ChallengePlayPageState extends State<ChallengePlayPage>
   void dispose() {
     _timer?.cancel();
     _lightController.dispose();
+    FlutterOverlayWindow.closeOverlay(); // 退出时关闭悬浮窗
     super.dispose();
   }
 
@@ -54,6 +61,7 @@ class _ChallengePlayPageState extends State<ChallengePlayPage>
     }
     setState(() => _challenges = challenges);
     _drawNext();
+    _setupOverlay(); // 启动悬浮窗
   }
 
   /// 挑战为空时提示
@@ -81,7 +89,7 @@ class _ChallengePlayPageState extends State<ChallengePlayPage>
         if (!_used.contains(i)) i,
     ];
     if (available.isEmpty) {
-      _used.clear(); // 抽完重新洗牌
+      _used.clear();
       _drawNext();
       return;
     }
@@ -94,6 +102,7 @@ class _ChallengePlayPageState extends State<ChallengePlayPage>
     });
     _startLight(c.bpm);
     _startTimer();
+    _updateOverlay();
   }
 
   /// 启动灯闪烁（周期 = 60/BPM 秒）
@@ -104,15 +113,52 @@ class _ChallengePlayPageState extends State<ChallengePlayPage>
     _lightController.repeat(reverse: true);
   }
 
-  /// 启动倒计时
+  /// 启动倒计时（每秒 tick）
   void _startTimer() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() => _remaining--);
-      if (_remaining <= 0) {
-        _drawNext(); // 归零自动切下一个
-      }
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
+
+  void _tick() {
+    setState(() {
+      _remaining--;
+      _totalSeconds--;
+      if (_totalSeconds < 0) _totalSeconds = 0;
     });
+    // 总时长归零优先
+    if (_totalSeconds <= 0) {
+      _finish();
+      return;
+    }
+    // 单挑战归零 → 抽下一个
+    if (_remaining <= 0) {
+      _drawNext();
+    } else {
+      _updateOverlay();
+    }
+  }
+
+  /// 总时长结束：弹"挑战结束"，点返回回主页
+  Future<void> _finish() async {
+    _timer?.cancel();
+    _lightController.stop();
+    await FlutterOverlayWindow.closeOverlay(); // 关闭悬浮窗
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('挑战结束'),
+        content: const Text('本次频率挑战已完成。'),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('返回'),
+          ),
+        ],
+      ),
+    );
+    if (mounted) Navigator.of(context).pop();
   }
 
   /// 暂停 / 继续
@@ -130,6 +176,50 @@ class _ChallengePlayPageState extends State<ChallengePlayPage>
   /// 跳过
   void _skip() {
     _drawNext();
+  }
+
+  /// 剩余总时长文本，格式 分:秒
+  String get _totalTimeText {
+    final m = _totalSeconds ~/ 60;
+    final s = _totalSeconds % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+
+  // ===== 悬浮窗 =====
+
+  /// 请求权限并显示悬浮窗
+  Future<void> _setupOverlay() async {
+    try {
+      var granted = await FlutterOverlayWindow.isPermissionGranted();
+      if (!granted) {
+        await FlutterOverlayWindow.requestPermission();
+        granted = await FlutterOverlayWindow.isPermissionGranted();
+      }
+      if (!granted) return; // 用户拒绝，不显示悬浮窗
+      await FlutterOverlayWindow.showOverlay(
+        height: 72,
+        width: 300,
+        alignment: OverlayAlignment.topCenter,
+        enableDrag: true,
+        overlayTitle: '频率挑战',
+        overlayContent: '正在进行挑战',
+      );
+      _updateOverlay();
+    } catch (e) {
+      debugPrint('悬浮窗启动失败: $e');
+    }
+  }
+
+  /// 同步数据到悬浮窗
+  void _updateOverlay() {
+    final c = _current;
+    if (c == null) return;
+    FlutterOverlayWindow.shareData({
+      'seconds': _remaining,
+      'total': _totalTimeText,
+      'color': c.color.toARGB32(),
+      'bpm': c.bpm,
+    });
   }
 
   @override
@@ -179,7 +269,7 @@ class _ChallengePlayPageState extends State<ChallengePlayPage>
               ),
             ),
             const SizedBox(height: 48),
-            // 倒计时数字
+            // 当前挑战倒计时
             Text(
               '$_remaining',
               style: const TextStyle(
@@ -188,9 +278,10 @@ class _ChallengePlayPageState extends State<ChallengePlayPage>
               ),
             ),
             const SizedBox(height: 8),
+            // 剩余总时长
             Text(
-              '剩余秒数',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              '剩余总时长 $_totalTimeText',
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const Spacer(),
             // 暂停/继续 + 跳过

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'models/difficulty.dart';
+import 'overlay/challenge_overlay.dart';
 import 'pages/splash_page.dart';
 import 'services/storage_service.dart';
 import 'theme.dart';
@@ -31,6 +32,16 @@ Future<void> main() async {
     debugPrint('存储初始化失败（继续启动）: $e');
   }
   runApp(const TaskAdventureApp());
+}
+
+/// 悬浮窗入口（由 flutter_overlay_window 在独立引擎中调用）
+@pragma("vm:entry-point")
+void overlayMain() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: ChallengeOverlay(),
+  ));
 }
 
 class TaskAdventureApp extends StatelessWidget {

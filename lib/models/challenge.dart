@@ -82,3 +82,26 @@ class Challenge {
         seconds: json['seconds'] as int,
       );
 }
+
+/// 挑战总时长档位（固定难度）
+class ChallengeDuration {
+  final String name;
+  final int minutes;
+
+  const ChallengeDuration({required this.name, required this.minutes});
+}
+
+/// 挑战总时长预设（4 个难度 + 自定义范围）
+class ChallengeDurations {
+  ChallengeDurations._();
+
+  static const List<ChallengeDuration> presets = [
+    ChallengeDuration(name: '普通', minutes: 15),
+    ChallengeDuration(name: '困难', minutes: 30),
+    ChallengeDuration(name: '极难', minutes: 60),
+    ChallengeDuration(name: '地狱', minutes: 120),
+  ];
+
+  static const int minMinutes = 15;
+  static const int maxMinutes = 240;
+}
