@@ -127,17 +127,21 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                for (final d in Difficulty.values)
-                  ChoiceChip(
-                    label: Text(d.label),
-                    selected: _difficulty == d,
-                    onSelected: (_) => setState(() => _difficulty = d),
-                  ),
-              ],
+            // 监听难度名称变化，即时更新显示
+            ValueListenableBuilder<Map<Difficulty, String>>(
+              valueListenable: difficultyNames,
+              builder: (context, _, _) => Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  for (final d in Difficulty.values)
+                    ChoiceChip(
+                      label: Text(d.label),
+                      selected: _difficulty == d,
+                      onSelected: (_) => setState(() => _difficulty = d),
+                    ),
+                ],
+              ),
             ),
             const SizedBox(height: 32),
             // 总时长调节

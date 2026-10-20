@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'models/difficulty.dart';
 import 'pages/splash_page.dart';
 import 'services/storage_service.dart';
 import 'theme.dart';
@@ -20,6 +21,11 @@ Future<void> main() async {
     // 读取已保存的主题
     final themeId = await storage.getThemeId();
     themeNotifier.value = AppThemes.byId(themeId);
+    // 读取自定义难度名称
+    final names = await storage.getDifficultyNames();
+    difficultyNames.value = {
+      for (final d in Difficulty.values) d: names[d.name] ?? d.defaultLabel,
+    };
   } catch (e) {
     // 初始化失败不阻塞启动：进入主页后若任务包为空，会提示"请先导入任务包"
     debugPrint('存储初始化失败（继续启动）: $e');

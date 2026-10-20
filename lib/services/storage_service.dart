@@ -16,6 +16,7 @@ class StorageService {
   static const String _kThemeId = 'theme_id';
   static const String _kVibrationEnabled = 'vibration_enabled';
   static const String _kPinnedPacks = 'pinned_packs';
+  static const String _kDifficultyNames = 'difficulty_names';
   static const String _kInitialized = 'initialized';
 
   /// 内置示例任务包内容（首次启动自动内置）
@@ -156,5 +157,20 @@ class StorageService {
   Future<void> setPinnedPacks(List<String> names) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kPinnedPacks, jsonEncode(names));
+  }
+
+  /// 读取自定义难度名称（Map<难度枚举名, 自定义名称>）
+  Future<Map<String, String>> getDifficultyNames() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_kDifficultyNames);
+    if (raw == null || raw.isEmpty) return {};
+    return (jsonDecode(raw) as Map<String, dynamic>)
+        .map((k, v) => MapEntry(k, v as String));
+  }
+
+  /// 保存自定义难度名称
+  Future<void> setDifficultyNames(Map<String, String> names) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kDifficultyNames, jsonEncode(names));
   }
 }

@@ -35,6 +35,7 @@ class _GamePageState extends State<GamePage> {
   int _taskRemaining = 0;
   Task? _currentTask;
   bool _vibrationEnabled = true;
+  bool _paused = false;
 
   /// 本轮已抽取任务索引集合（索引相对当前难度列表）
   final Set<int> _used = {};
@@ -180,6 +181,16 @@ class _GamePageState extends State<GamePage> {
     _drawNextTask();
   }
 
+  /// 暂停 / 继续
+  void _togglePause() {
+    setState(() => _paused = !_paused);
+    if (_paused) {
+      _timer?.cancel(); // 暂停：停止计时
+    } else {
+      _startTimer(); // 继续：重新计时
+    }
+  }
+
   /// 剩余总时长文本，格式 分:秒
   String get _totalTimeText {
     final m = _totalSeconds ~/ 60;
@@ -255,17 +266,31 @@ class _GamePageState extends State<GamePage> {
               borderRadius: BorderRadius.circular(6),
             ),
             const SizedBox(height: 32),
-            // 跳过按钮
-            FilledButton.icon(
-              onPressed: _skip,
-              icon: const Icon(Icons.skip_next),
-              label: const Text('跳过'),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 48,
-                  vertical: 16,
+            // 暂停/继续 + 跳过按钮
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.tonalIcon(
+                    onPressed: _togglePause,
+                    icon: Icon(_paused ? Icons.play_arrow : Icons.pause),
+                    label: Text(_paused ? '继续' : '暂停'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _paused ? null : _skip, // 暂停时禁用跳过
+                    icon: const Icon(Icons.skip_next),
+                    label: const Text('跳过'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
           ],

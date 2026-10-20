@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../main.dart';
+import '../models/difficulty.dart';
 import '../services/storage_service.dart';
 import '../theme.dart';
 
@@ -81,6 +82,22 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  /// 编辑自定义难度名称
+  Future<void> _editDifficultyNames() async {
+    final result = await showDialog<Map<Difficulty, String>>(
+      context: context,
+      builder: (_) => const _DifficultyNamesDialog(),
+    );
+    if (result == null) return;
+    // 更新全局状态（即时生效）+ 持久化
+    difficultyNames.value = result;
+    final names = {
+      for (final d in Difficulty.values) d.name: result[d] ?? d.defaultLabel,
+    };
+    await _storage.setDifficultyNames(names);
+    if (mounted) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,6 +126,14 @@ class _SettingsPageState extends State<SettingsPage> {
             subtitle: const Text('查看作者、联系方式与防诈骗提示'),
             trailing: const Icon(Icons.chevron_right),
             onTap: _showNotice,
+          ),
+          const Divider(height: 24),
+          ListTile(
+            leading: const Icon(Icons.label_outline),
+            title: const Text('难度名称'),
+            subtitle: const Text('自定义简单/普通/困难/极难的显示名称'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _editDifficultyNames,
           ),
         ],
       ),
@@ -144,6 +169,73 @@ class _SettingsPageState extends State<SettingsPage> {
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white24),
       ),
+    );
+  }
+}
+
+/// 难度名称编辑对话框：自管理 4 个输入框的生命周期
+class _DifficultyNamesDialog extends StatefulWidget {
+  const _DifficultyNamesDialog();
+
+  @override
+  State<_DifficultyNamesDialog> createState() => _DifficultyNamesDialogState();
+}
+
+class _DifficultyNamesDialogState extends State<_DifficultyNamesDialog> {
+  late final Map<Difficulty, TextEditingController> _controllers = {
+    for (final d in Difficulty.values)
+      d: TextEditingController(
+        text: difficultyNames.value[d] ?? d.defaultLabel,
+      ),
+  };
+
+  @override
+  void dispose() {
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _save() {
+    final result = <Difficulty, String>{};
+    for (final d in Difficulty.values) {
+      final text = _controllers[d]!.text.trim();
+      result[d] = text.isEmpty ? d.defaultLabel : text;
+    }
+    Navigator.of(context).pop(result);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('自定义难度名称'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final d in Difficulty.values)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextField(
+                controller: _controllers[d],
+                decoration: InputDecoration(
+                  labelText: '${d.defaultLabel}（默认名）',
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('取消'),
+        ),
+        FilledButton(
+          onPressed: _save,
+          child: const Text('保存'),
+        ),
+      ],
     );
   }
 }
