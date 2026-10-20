@@ -201,9 +201,9 @@ class _ChallengePlayPageState extends State<ChallengePlayPage>
       // 注意：插件的 width/height 参数按 px 处理，需用设备像素比换算
       await FlutterOverlayWindow.showOverlay(
         height: (110 * dpr).round(),
-        width: (340 * dpr).round(),
+        width: (170 * dpr).round(),
         alignment: OverlayAlignment.topCenter,
-        enableDrag: true,
+        enableDrag: false,
         // 指定初始 y 坐标（dp），避免插件默认的负状态栏高度偏移导致悬浮窗在屏幕外
         startPosition: const OverlayPosition(0, 100),
         overlayTitle: '频率挑战',

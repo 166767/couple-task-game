@@ -64,15 +64,15 @@ class _ChallengeOverlayState extends State<ChallengeOverlay>
     return Material(
       color: Colors.transparent,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.75),
+          color: Colors.black.withValues(alpha: 0.70),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 频率灯（稍大）
+            // 频率灯
             AnimatedBuilder(
               animation: _lightController,
               builder: (context, child) => Opacity(
@@ -80,21 +80,21 @@ class _ChallengeOverlayState extends State<ChallengeOverlay>
                 child: child,
               ),
               child: Container(
-                width: 36,
-                height: 36,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
                   color: _color,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
                       color: _color.withValues(alpha: 0.6),
-                      blurRadius: 12,
+                      blurRadius: 10,
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 10),
             // 右侧两行文字：当前秒数 + 剩余总时间
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,14 +104,14 @@ class _ChallengeOverlayState extends State<ChallengeOverlay>
                   '$_seconds 秒',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '总 $_totalText',
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ],
             ),
