@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../models/difficulty.dart';
 import '../models/task_pack.dart';
 import '../services/storage_service.dart';
+import 'challenge_page.dart';
 import 'game_page.dart';
 import 'settings_page.dart';
 import 'task_manager_page.dart';
@@ -184,6 +185,20 @@ class _HomePageState extends State<HomePage> {
               icon: const Icon(Icons.folder_open),
               label: const Text('任务管理'),
               style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // 频率挑战按钮（v1.5 新玩法入口）
+            FilledButton.tonalIcon(
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ChallengePage()),
+                );
+              },
+              icon: const Icon(Icons.lightbulb),
+              label: const Text('频率挑战'),
+              style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
             ),

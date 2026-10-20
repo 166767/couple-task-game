@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/challenge.dart';
 import '../models/task_pack.dart';
 import 'txt_parser.dart';
 
@@ -17,6 +18,7 @@ class StorageService {
   static const String _kVibrationEnabled = 'vibration_enabled';
   static const String _kPinnedPacks = 'pinned_packs';
   static const String _kDifficultyNames = 'difficulty_names';
+  static const String _kChallenges = 'challenges';
   static const String _kInitialized = 'initialized';
 
   /// 内置示例任务包内容（首次启动自动内置）
@@ -172,5 +174,23 @@ class StorageService {
   Future<void> setDifficultyNames(Map<String, String> names) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kDifficultyNames, jsonEncode(names));
+  }
+
+  /// 读取所有挑战
+  Future<List<Challenge>> getChallenges() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_kChallenges);
+    if (raw == null || raw.isEmpty) return [];
+    final list = jsonDecode(raw) as List<dynamic>;
+    return [
+      for (final e in list) Challenge.fromJson(e as Map<String, dynamic>),
+    ];
+  }
+
+  /// 保存所有挑战
+  Future<void> setChallenges(List<Challenge> challenges) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = [for (final c in challenges) c.toJson()];
+    await prefs.setString(_kChallenges, jsonEncode(list));
   }
 }
