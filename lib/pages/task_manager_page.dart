@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:charset/charset.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -100,6 +101,29 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
       // 显示具体错误，便于定位是编码问题还是格式问题
       final detail = e is FormatException ? e.message : e.toString();
       _toast('文件格式错误：$detail');
+    }
+  }
+
+  /// 剪贴板粘贴导入：从剪贴板读取任务文字并解析
+  Future<void> _pasteImport() async {
+    final result = await showDialog<_PasteResult>(
+      context: context,
+      builder: (_) => const _PasteImportDialog(),
+    );
+    if (result == null) return;
+
+    try {
+      final pack = TxtParser.parse(result.name, result.content);
+      if (_packs.any((p) => p.name == pack.name)) {
+        _toast('已存在同名任务包');
+        return;
+      }
+      await _storage.saveTaskPacks([..._packs, pack]);
+      await _load();
+      _toast('导入成功');
+    } catch (e) {
+      final detail = e is FormatException ? e.message : e.toString();
+      _toast('格式错误：$detail');
     }
   }
 
@@ -263,7 +287,16 @@ class _TaskManagerPageState extends State<TaskManagerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('任务管理')),
+      appBar: AppBar(
+        title: const Text('任务管理'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.content_paste),
+            tooltip: '粘贴导入',
+            onPressed: _pasteImport,
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _import,
         icon: const Icon(Icons.file_upload),
@@ -380,6 +413,109 @@ class _RenameDialogState extends State<_RenameDialog> {
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
           child: const Text('确定'),
+        ),
+      ],
+    );
+  }
+}
+
+/// 粘贴导入结果（名称 + 内容）
+class _PasteResult {
+  final String name;
+  final String content;
+
+  _PasteResult({required this.name, required this.content});
+}
+
+/// 粘贴导入对话框：自管理 controller，自动读取剪贴板
+class _PasteImportDialog extends StatefulWidget {
+  const _PasteImportDialog();
+
+  @override
+  State<_PasteImportDialog> createState() => _PasteImportDialogState();
+}
+
+class _PasteImportDialogState extends State<_PasteImportDialog> {
+  final TextEditingController _name = TextEditingController();
+  final TextEditingController _content = TextEditingController();
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadClipboard();
+  }
+
+  /// 读取剪贴板文字，自动填充到内容框
+  Future<void> _loadClipboard() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text ?? '';
+    if (text.isNotEmpty && mounted) {
+      setState(() => _content.text = text);
+    }
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _content.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final name = _name.text.trim();
+    final content = _content.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = '请输入任务包名称');
+      return;
+    }
+    if (content.isEmpty) {
+      setState(() => _error = '请粘贴任务内容');
+      return;
+    }
+    Navigator.of(context).pop(_PasteResult(name: name, content: content));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('粘贴导入'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _name,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: '任务包名称'),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _content,
+            maxLines: 8,
+            decoration: const InputDecoration(
+              labelText: '任务内容（已自动读取剪贴板）',
+              border: OutlineInputBorder(),
+              hintText: '[简单]\n任务内容|时长\n...',
+            ),
+          ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('取消'),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: const Text('导入'),
         ),
       ],
     );
