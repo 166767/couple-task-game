@@ -64,7 +64,7 @@ class _ChallengeOverlayState extends State<ChallengeOverlay>
     return Material(
       color: Colors.transparent,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.70),
           borderRadius: BorderRadius.circular(16),
@@ -80,8 +80,8 @@ class _ChallengeOverlayState extends State<ChallengeOverlay>
                 child: child,
               ),
               child: Container(
-                width: 30,
-                height: 30,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: _color,
                   shape: BoxShape.circle,
@@ -94,7 +94,7 @@ class _ChallengeOverlayState extends State<ChallengeOverlay>
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             // 右侧两行文字：当前秒数 + 剩余总时间
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,14 +104,14 @@ class _ChallengeOverlayState extends State<ChallengeOverlay>
                   '$_seconds 秒',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '总 $_totalText',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  style: const TextStyle(color: Colors.white70, fontSize: 11),
                 ),
               ],
             ),
